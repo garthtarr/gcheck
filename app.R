@@ -69,7 +69,6 @@ plot.monthly.fn2 = function(data,title){
   # top =textGrob(title, gp=gpar(fontsize=16)))
 }
 
-
 oall.plot = function(data,variable,title){
   ggplot(data, aes_string(variable)) +
     geom_density() + theme_bw(base_size = 14) + 
@@ -84,7 +83,7 @@ ui <- fluidPage(
                     "))
   ),
   
-  titlePanel("Grader evaluation"),
+  titlePanel("gcheck: grader evaluation"),
   
   sidebarLayout(
     sidebarPanel(
