@@ -3,14 +3,14 @@ title: "The gcheck app"
 author: "Garth Tarr"
 date: "25 September 2016"
 output:
-  pdf_document:
-    toc: yes
-    toc_depth: '3'
   html_document:
     theme: flatly
     toc: yes
     toc_depth: 3
     toc_float: yes
+  pdf_document:
+    toc: yes
+    toc_depth: '3'
 ---
 
 ```{r setup, include=FALSE}
@@ -31,7 +31,6 @@ To run the **gcheck** app locally on your computer, you need:
 4. Unzip the `gcheck-master.zip` file
 5. Open the `gcheck.Rproj` file.  This is an RStudio project file which should open RStudio and set the working directory to the same folder.
 6. Make sure you have the necessary packages installed.  The first time doing this on a new computer (or if you update R and need to reinstall them), use:
-
 ```r
 install.packages("readr")
 install.packages("shiny")
@@ -43,16 +42,14 @@ install.packages("gridExtra")
 install.packages("magrittr")
 install.packages("markdown")
 ```
-
-6. Check that you've got the latest version of all the installed R packages.  In RStudio you can do this by going to the `Tools` dropdown menu and selecting `Check for package updates...`
-7. In the **Console** window type:
+7. Check that you've got the latest version of all the installed R packages.  In RStudio you can do this by going to the `Tools` dropdown menu and selecting `Check for package updates...`
+8. In the **Console** window type:
 ```r
 shiny::runApp()
 ```
    and press **Enter**.  Alternatively, if you have the `app.R` file open, you there will be `Run App` button in the top right of the source code window.  
    ![](img/screenshot.png)
-
-8. This will load the **gcheck** app in a browser window.  While the app is running in the browser RStudio has to stay open.  If you close RStudio, the browser window will go grey and say it lost the connection. 
+9. This will load the **gcheck** app in a browser window.  While the app is running in the browser RStudio has to stay open.  If you close RStudio, the browser window will go grey and say it lost the connection. 
 
 #### Troubleshooting:
 
