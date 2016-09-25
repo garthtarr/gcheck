@@ -3,19 +3,21 @@ title: "The gcheck app"
 author: "Garth Tarr"
 date: "25 September 2016"
 output:
+  pdf_document:
+    toc: yes
+    toc_depth: '3'
   html_document:
     theme: flatly
     toc: yes
     toc_depth: 3
     toc_float: yes
-  pdf_document:
-    toc: yes
-    toc_depth: '3'
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+
+The most recent version of this documentation can be found here: [garthtarr.github.io/gcheck](https://garthtarr.github.io/gcheck/)
 
 ## Installing the app
 
@@ -23,7 +25,7 @@ The **gcheck** program is a shiny app running on top of R.  You can access it vi
 
 To run the **gcheck** app locally on your computer, you need:
 
-1. The latest version of R [https://cran.r-project.org/](cran.r-project.org).
+1. The latest version of R [https://cran.r-project.org/](cran.r-project.org)
 2. The latest version of RStudio [rstudio.com/products/rstudio/download](https://www.rstudio.com/products/rstudio/download/)
 3. The latest version of the **gcheck** app source code from [here](https://github.com/garthtarr/gcheck/archive/master.zip)
 4. Unzip the `gcheck-master.zip` file
