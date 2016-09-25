@@ -1,5 +1,19 @@
 # 
-# Annual evaluation
+# gcheck app
+# 
+# Garth Tarr garth.tarr@gmail.com
+# 
+# if you can see this, to run
+# the app all you need to do is 
+# click the Run App button in the top
+# right of this window pane.
+# 
+# 
+# 
+# 
+# 
+# 
+# Do not touch anything below this line
 # 
 require(readr)
 require(shiny)
