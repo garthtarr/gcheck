@@ -266,7 +266,7 @@ server <- function(input, output) {
     input_file_format <- tools::file_ext(inFile$name)
     new_file_name <- paste0(inFile$datapath, ".", input_file_format)
     file.rename(inFile$datapath, new_file_name)
-    dat <- readr::read_csv(new_file_name, 
+    dat <- readr::read_csv(new_file_name, guess_max = 10000,
                            col_types = cols(Grader_No = col_character(),
                                             Grader_no = col_character(),
                                             grader_no = col_character(),
