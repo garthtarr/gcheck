@@ -215,7 +215,7 @@ ui <- fluidPage(
                   tabPanel("Help",
                            includeMarkdown("help.Rmd")
                            #includeHTML("help.html")
-                           )#,
+                  )#,
                   # tabPanel("Summary plots", value = "ms1",
                   #          shiny::HTML("<div class='pagebreak'> </div>"),
                   #          h3("MSA marbling"),
@@ -278,10 +278,16 @@ server <- function(input, output) {
                                             #gradetime = col_time(format = "%H:%M:%S"), 
                                             #killtime = col_time(format = "%H:%M:%S"), 
                                             #KillDate = col_date(format = "%d/%m/%Y")
-                                            )
                            )
+    )
     names(dat) = tolower(make.names(names(dat)))
     dat$month = months(dat$gradedate)
+    dat$ossification = apply(
+      dat[,c("ossificationhot","ossificationcold")],
+      MARGIN = 1,FUN = max, na.rm = TRUE)
+    dat$hump = apply(
+      dat[,c("humphot","humpcold")],
+      MARGIN = 1,FUN = max, na.rm = TRUE)
     colnames(dat)[colnames(dat)=="grader_no"] = "grader"
     return(dat)
   })
@@ -430,7 +436,7 @@ server <- function(input, output) {
   output$graderTable = DT::renderDataTable({
     tab = data.frame(table(data()$grader))
     colnames(tab) = c("Grader ID","Number of carcases graded")
-    DT::datatable(tab,rownames = FALSE,options = list(dom = 't'))
+    DT::datatable(tab,rownames = FALSE,options = list(dom = 't',pageLength = 1000))
   })
   
   output$graderMonthText = renderText({
@@ -634,7 +640,7 @@ server <- function(input, output) {
   output$MarblingResidPlot = renderPlot({
     x = MonthResid()
     ggplot(data=x, aes(x=Month, y=Marbling, group=Grader)) +
-      geom_line(aes(color=Grader)) +
+      geom_hline(yintercept = 0,colour=gray(0.5)) + geom_line(aes(color=Grader)) +
       geom_point(aes(color=Grader,size=n)) +
       ylab("Average marbling score residual") +
       theme_bw(base_size = 14) 
@@ -643,7 +649,7 @@ server <- function(input, output) {
   output$HumpResidPlot = renderPlot({
     x = MonthResid()
     ggplot(data=x, aes(x=Month, y=Hump, group=Grader)) +
-      geom_line(aes(color=Grader)) +
+      geom_hline(yintercept = 0,colour=gray(0.5)) + geom_line(aes(color=Grader)) +
       geom_point(aes(color=Grader,size=n)) +
       ylab("Average hump height residual") +
       theme_bw(base_size = 14) 
@@ -652,7 +658,7 @@ server <- function(input, output) {
   output$OssificationResidPlot = renderPlot({
     x = MonthResid()
     ggplot(data=x, aes(x=Month, y=Ossification, group=Grader)) +
-      geom_line(aes(color=Grader)) +
+      geom_hline(yintercept = 0,colour=gray(0.5)) + geom_line(aes(color=Grader)) +
       geom_point(aes(color=Grader,size=n)) +
       ylab("Average ossification residual") +
       theme_bw(base_size = 14) 
@@ -661,7 +667,7 @@ server <- function(input, output) {
   output$RibfatResidPlot = renderPlot({
     x = MonthResid()
     ggplot(data=x, aes(x=Month, y=Ribfat, group=Grader)) +
-      geom_line(aes(color=Grader)) +
+      geom_hline(yintercept = 0,colour=gray(0.5)) + geom_line(aes(color=Grader)) +
       geom_point(aes(color=Grader,size=n)) +
       ylab("Average ribfat residual") +
       theme_bw(base_size = 14) 
@@ -670,7 +676,7 @@ server <- function(input, output) {
   output$pHResidPlot = renderPlot({
     x = MonthResid()
     ggplot(data=x, aes(x=Month, y=pH, group=Grader)) +
-      geom_line(aes(color=Grader)) +
+      geom_hline(yintercept = 0,colour=gray(0.5)) + geom_line(aes(color=Grader)) +
       geom_point(aes(color=Grader,size=n)) +
       ylab("Average pH residual") +
       theme_bw(base_size = 14) 
@@ -679,7 +685,7 @@ server <- function(input, output) {
   output$MarblingEffectPlot = renderPlot({
     x = MonthEffect()
     ggplot(data=x, aes(x=Month, y=Marbling, group=Grader)) +
-      geom_line(aes(color=Grader)) +
+      geom_hline(yintercept = 0,colour=gray(0.5)) + geom_line(aes(color=Grader)) +
       geom_point(aes(color=Grader,size=n)) +
       ylab("Marbling score effect size") +
       theme_bw(base_size = 14) 
@@ -688,7 +694,7 @@ server <- function(input, output) {
   output$HumpEffectPlot = renderPlot({
     x = MonthEffect()
     ggplot(data=x, aes(x=Month, y=Hump, group=Grader)) +
-      geom_line(aes(color=Grader)) +
+      geom_hline(yintercept = 0,colour=gray(0.5)) + geom_line(aes(color=Grader)) +
       geom_point(aes(color=Grader,size=n)) +
       ylab("Hump height effect size") +
       theme_bw(base_size = 14) 
@@ -697,7 +703,7 @@ server <- function(input, output) {
   output$OssificationEffectPlot = renderPlot({
     x = MonthEffect()
     ggplot(data=x, aes(x=Month, y=Ossification, group=Grader)) +
-      geom_line(aes(color=Grader)) +
+      geom_hline(yintercept = 0,colour=gray(0.5)) + geom_line(aes(color=Grader)) +
       geom_point(aes(color=Grader,size=n)) +
       ylab("Ossification effect size") +
       theme_bw(base_size = 14) 
@@ -706,7 +712,7 @@ server <- function(input, output) {
   output$RibfatEffectPlot = renderPlot({
     x = MonthEffect()
     ggplot(data=x, aes(x=Month, y=Ribfat, group=Grader)) +
-      geom_line(aes(color=Grader)) +
+      geom_hline(yintercept = 0,colour=gray(0.5)) + geom_line(aes(color=Grader)) +
       geom_point(aes(color=Grader,size=n)) +
       ylab("Rib fat effect size") +
       theme_bw(base_size = 14) 
@@ -715,7 +721,7 @@ server <- function(input, output) {
   output$pHEffectPlot = renderPlot({
     x = MonthEffect()
     ggplot(data=x, aes(x=Month, y=pH, group=Grader)) +
-      geom_line(aes(color=Grader)) +
+      geom_hline(yintercept = 0,colour=gray(0.5)) + geom_line(aes(color=Grader)) +
       geom_point(aes(color=Grader,size=n)) +
       ylab("Average pH residual") +
       theme_bw(base_size = 14) 
