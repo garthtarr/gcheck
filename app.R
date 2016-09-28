@@ -15,6 +15,8 @@
 # 
 # Do not touch anything below this line
 # 
+require(stargazer)
+#require(pander)
 require(readr)
 require(shiny)
 require(ggplot2)
@@ -106,7 +108,7 @@ ui <- fluidPage(
       h4("Subset the data"),
       uiOutput("uiselect"),
       br(),
-      p("Printing works best with the Google Chrome browser."),
+      shiny::p("Printing works best with the Google Chrome browser."),
       br(),
       div(align = "center",
           div(img(src = "mla_logo_home.jpg",width = "150px")),
@@ -134,7 +136,7 @@ ui <- fluidPage(
                            plotOutput("discretePlot",height = "200px"),
                            plotOutput("continuousPlot"),
                            h3("How to interpret the violin plots"),
-                           p("The violin plots for continuous data (as seen above) are mirror image density plots (seen below).  The standard density plots (seen below) are like smoothed histograms.  When viewed as a violin plot, they look similar to a boxplot, but enables the viewer to see more detail, especially with respect to the lumpiness of the data, than a boxplot.  The average (sample mean) of the data set is indicated as a solid dot."),
+                           shiny::p("The violin plots for continuous data (as seen above) are mirror image density plots (seen below).  The standard density plots (seen below) are like smoothed histograms.  When viewed as a violin plot, they look similar to a boxplot, but enables the viewer to see more detail, especially with respect to the lumpiness of the data, than a boxplot.  The average (sample mean) of the data set is indicated as a solid dot."),
                            plotOutput("msamarblingPlot"),
                            plotOutput("humpcoldPlot"),
                            plotOutput("ossificationcoldPlot"),
@@ -148,16 +150,18 @@ ui <- fluidPage(
                   tabPanel("Model outputs",
                            h3("Predictive ability"),
                            DT::dataTableOutput("PredictiveTab"),
-                           h3("MSA marbling model"),
-                           verbatimTextOutput("marbOutputs"),
-                           h3("Hump height model"),
-                           verbatimTextOutput("humpOutputs"),
-                           h3("Ossification model"),
-                           verbatimTextOutput("ossOutputs"),
-                           h3("Rib fat model"),
-                           verbatimTextOutput("rbfOutputs"),
-                           h3("pH model"),
-                           verbatimTextOutput("phOutputs")
+                           h3("Model summaries"),
+                           uiOutput("modelOutputs")
+                           #h3("MSA marbling model"),
+                           # verbatimTextOutput("marbOutputs"),
+                           # h3("Hump height model"),
+                           # verbatimTextOutput("humpOutputs"),
+                           # h3("Ossification model"),
+                           # verbatimTextOutput("ossOutputs"),
+                           # h3("Rib fat model"),
+                           # verbatimTextOutput("rbfOutputs"),
+                           # h3("pH model"),
+                           # verbatimTextOutput("phOutputs")
                   ),
                   tabPanel("Grader assessment",
                            h3("Average residuals"),
@@ -165,7 +169,7 @@ ui <- fluidPage(
                            h3("Standard deviation of residuals"),
                            DT::dataTableOutput("GraderSdTab"),
                            h3("Effect size"),
-                           p("The effect size is the difference in average residual score divided by the overall residual standard deviation.  The numbers in the table below are the effect size relative to zero.  It's better to consider the difference in effect size between any two graders, for example if one grader had an effect size of 0.3 and another had an effect size of -0.4 then the effect size between the two graders would be 0.7. A small effect size is 0.2, medium (probably worth investigating further) is around 0.5 and large (quite unusual) would be 0.8 or more."),
+                           shiny::p("The effect size is the difference in average residual score divided by the overall residual standard deviation.  The numbers in the table below are the effect size relative to zero.  It's better to consider the difference in effect size between any two graders, for example if one grader had an effect size of 0.3 and another had an effect size of -0.4 then the effect size between the two graders would be 0.7. A small effect size is 0.2, medium (probably worth investigating further) is around 0.5 and large (quite unusual) would be 0.8 or more."),
                            DT::dataTableOutput("GraderEffectTab"),
                            shiny::HTML("<div class='pagebreak'> </div>"),
                            h3("MSA marbling model"),
@@ -266,7 +270,7 @@ server <- function(input, output) {
     input_file_format <- tools::file_ext(inFile$name)
     new_file_name <- paste0(inFile$datapath, ".", input_file_format)
     file.rename(inFile$datapath, new_file_name)
-    dat <- readr::read_csv(new_file_name, guess_max = 10000,
+    dat <- readr::read_csv(new_file_name, guess_max = 20000,
                            col_types = cols(Grader_No = col_character(),
                                             Grader_no = col_character(),
                                             grader_no = col_character(),
@@ -282,14 +286,19 @@ server <- function(input, output) {
     )
     names(dat) = tolower(make.names(names(dat)))
     dat$month = months(dat$gradedate)
-    dat$ossification = apply(
-      dat[,c("ossificationhot","ossificationcold")],
-      MARGIN = 1,FUN = max, na.rm = TRUE)
-    dat$hump = apply(
-      dat[,c("humphot","humpcold")],
-      MARGIN = 1,FUN = max, na.rm = TRUE)
+    dat$ossification = pmax(
+      dat$ossificationhot,dat$ossificationcold,
+      na.rm = TRUE) %>% as.numeric()
+    dat$hump = pmax(
+      dat$humphot,dat$humpcold,
+      na.rm = TRUE) %>% as.numeric()
     colnames(dat)[colnames(dat)=="grader_no"] = "grader"
-    return(dat)
+    datf = dat[,c("ph","feedtype","sex","hgp",
+                  "msamarbling","ribfatcold",
+                  "hump","ossification",
+                  "totalhscw","month","ema","grader")]
+    datf = na.omit(datf)
+    return(datf)
   })
   
   data = reactive({
@@ -357,15 +366,15 @@ server <- function(input, output) {
               title = "MSA marbling")
   })
   output$humpcoldPlot <- renderPlot({
-    #hist(data()$humpcold,main = "Hump height")
+    #hist(data()$hump,main = "Hump height")
     oall.plot(data = data(),
-              variable = "humpcold", 
+              variable = "hump", 
               title = "Hump height")
   })
   output$ossificationcoldPlot <- renderPlot({
-    #hist(data()$ossificationcold,main = "Ossification")
+    #hist(data()$ossification,main = "Ossification")
     oall.plot(data = data(),
-              variable = "ossificationcold", 
+              variable = "ossification", 
               title = "Ossification")
   })
   output$ribfatcoldPlot <- renderPlot({
@@ -382,14 +391,14 @@ server <- function(input, output) {
   })
   
   output$continuousPlot <- renderPlot({
-    tst1 = reshape2::melt(data()[,c("grader","msamarbling","ph","humpcold","ossificationcold","ribfatcold","totalhscw")],
-                          measure.vars = c("msamarbling","humpcold","ossificationcold","ribfatcold","ph","totalhscw"))
+    tst1 = reshape2::melt(data()[,c("grader","msamarbling","ph","hump","ossification","ribfatcold","totalhscw")],
+                          measure.vars = c("msamarbling","hump","ossification","ribfatcold","ph","totalhscw"))
     
     var1_names <- c(
       `msamarbling`="MSA marbling",
-      `humpcold`="Hump height",
+      `hump`="Hump height",
       `ph`="pH",
-      `ossificationcold`="Ossification",
+      `ossification`="Ossification",
       `ribfatcold`="Rib fat",
       `totalhscw`="Hot carcase weight"
     )
@@ -453,15 +462,15 @@ server <- function(input, output) {
     x$month = ordered(x$month,month.name[is.element(month.name,names(table(x$month)))])
     tab = as.data.frame.matrix(table(x$month,x$grader))
     #colnames(tab) = c("Grader ID","Number of carcases graded")
-    DT::datatable(tab,rownames = TRUE,options = list(dom = 't',pageLength = 12))
+    DT::datatable(tab,rownames = TRUE,options = list(dom = 't',pageLength = 1000))
   })
   
   
   model.data = reactive({
     mdat = subset(data(),select=c("ph","feedtype",
                                   "sex","hgp",
-                                  "msamarbling","humpcold",
-                                  "ossificationcold","ribfatcold",
+                                  "msamarbling","hump",
+                                  "ossification","ribfatcold",
                                   "totalhscw","month"))
     
     if(dim(table(data()$sex))<=1){
@@ -488,29 +497,33 @@ server <- function(input, output) {
     lm(msamarbling ~ ., data = model.data())
   })
   hump.mod = reactive({
-    lm(humpcold ~ ., data = model.data())
+    lm(hump ~ ., data = model.data())
   })
   oss.mod = reactive({
-    lm(ossificationcold ~ ., data = model.data())
+    lm(ossification ~ ., data = model.data())
   })
   rbf.mod = reactive({
     lm(ribfatcold ~ ., data = model.data())
   })  
-  output$marbOutputs = renderPrint({
-    summary(marb.mod())
+  output$modelOutputs = renderUI({
+    HTML(stargazer(marb.mod(),hump.mod(),oss.mod(),rbf.mod(),ph.mod(),
+                   type="html",digits = 3,digits.extra=0,report = "vcp*"))
   })
-  output$phOutputs = renderPrint({
-    summary(ph.mod())
-  })
-  output$humpOutputs = renderPrint({
-    summary(hump.mod())
-  })
-  output$ossOutputs = renderPrint({
-    summary(oss.mod())
-  })
-  output$rbfOutputs = renderPrint({
-    summary(rbf.mod())
-  })
+  # output$marbOutputs = renderPrint({
+  #   summary(marb.mod())
+  # })
+  # output$phOutputs = renderPrint({
+  #   summary(ph.mod())
+  # })
+  # output$humpOutputs = renderPrint({
+  #   summary(hump.mod())
+  # })
+  # output$ossOutputs = renderPrint({
+  #   summary(oss.mod())
+  # })
+  # output$rbfOutputs = renderPrint({
+  #   summary(rbf.mod())
+  # })
   
   output$phGraderPlot = renderPlot({
     ph.dat = data.frame(data()$grader,data()$ph,ph.mod()$residuals)
@@ -525,7 +538,7 @@ server <- function(input, output) {
     plot.fn(data = rbf.dat, title = "Rib fat")
   })
   output$humpGraderPlot = renderPlot({
-    hump.dat = data.frame(data()$grader,data()$humpcold,hump.mod()$residuals)
+    hump.dat = data.frame(data()$grader,data()$hump,hump.mod()$residuals)
     plot.fn(data = hump.dat, title = "Hump height")
   })
   output$marbGraderPlot = renderPlot({
@@ -550,7 +563,7 @@ server <- function(input, output) {
     ph.resid = aggregate(ph.mod()$resid,by=list(data()$grader),mean)
     x = data.frame(marb.resid,hump.resid[,2],oss.resid[,2],rbf.resid[,2],ph.resid[,2])
     colnames(x) = c("Grader ID","Marbling score","Hump height","Ossification","Rib fat","pH")
-    DT::datatable(x,rownames = FALSE,options = list(dom = 't')) %>% DT::formatRound(columns = 2:6,digits=2)
+    DT::datatable(x,rownames = FALSE,options = list(dom = 't',pageLength = 1000)) %>% DT::formatRound(columns = 2:6,digits=2)
   })
   
   output$graderSelect = renderUI({
@@ -572,7 +585,7 @@ server <- function(input, output) {
     levels(x$MonthNo) = 1:12
     DT::datatable(x, rownames = FALSE, 
                   options = list(dom = 't',
-                                 pageLength = 12, 
+                                 pageLength = 1000, 
                                  order=list(list(7,'asc'))
                   )
     ) %>% DT::formatRound(columns = 3:7,digits=2)
@@ -592,7 +605,14 @@ server <- function(input, output) {
                    rbf.resid[,2]/sd(rbf.mod()$resid),
                    ph.resid[,2]/sd(ph.mod()$resid))
     colnames(x) = c("Grader ID","Marbling score","Hump height","Ossification","Rib fat","pH")
-    DT::datatable(x,rownames = FALSE,options = list(dom = 't')) %>% DT::formatRound(columns = 2:6,digits=2)
+    DT::datatable(x,rownames = FALSE,
+                  options = list(dom = 't',pageLength = 1000)) %>% 
+      DT::formatRound(columns = 2:6,digits=2) %>%
+      DT::formatStyle(
+        columns=2:6,
+        fontWeight = DT::styleInterval(c(-0.3,0.3), c('bold', 'weight', 'bold')),
+        backgroundColor = DT::styleInterval(c(-0.5,0.5), c('pink', 'color', 'pink'))
+      )
   })
   
   MonthEffect = reactive({
@@ -746,7 +766,7 @@ server <- function(input, output) {
     levels(x$MonthNo) = 1:12
     DT::datatable(x, rownames = FALSE, 
                   options = list(dom = 't',
-                                 pageLength = 12, 
+                                 pageLength = 1000, 
                                  order=list(list(7,'asc'))
                   )
     ) %>% DT::formatRound(columns = 3:7,digits=2)
@@ -762,7 +782,7 @@ server <- function(input, output) {
     ph.resid = aggregate(ph.mod()$resid,by=list(data()$grader),sd)
     x = data.frame(marb.resid,hump.resid[,2],oss.resid[,2],rbf.resid[,2],ph.resid[,2])
     colnames(x) = c("Grader ID","Marbling score","Hump height","Ossification","Rib fat","pH")
-    DT::datatable(x,rownames = FALSE,options = list(dom = 't')) %>% DT::formatRound(columns = 2:6,digits=2)
+    DT::datatable(x,rownames = FALSE,options = list(dom = 't',pageLength = 1000)) %>% DT::formatRound(columns = 2:6,digits=2)
   })
   
   
@@ -780,7 +800,7 @@ server <- function(input, output) {
     levels(x$MonthNo) = 1:12
     DT::datatable(x, rownames = FALSE, 
                   options = list(dom = 't',
-                                 pageLength = 12, 
+                                 pageLength = 1000, 
                                  order=list(list(7,'asc'))
                   )
     ) %>% DT::formatRound(columns = 3:7,digits=2)
@@ -796,7 +816,7 @@ server <- function(input, output) {
     plot.monthly.fn(data = rbf.dat, title = "Rib fat")
   })
   output$humpGraderMonthlyPlot = renderPlot({
-    hump.dat = data.frame(data()$grader,data()$humpcold,hump.mod()$residuals,data()$month)
+    hump.dat = data.frame(data()$grader,data()$hump,hump.mod()$residuals,data()$month)
     plot.monthly.fn(data = hump.dat, title = "Hump height")
   })
   output$marbGraderMonthlyPlot = renderPlot({
@@ -805,7 +825,7 @@ server <- function(input, output) {
   })
   
   output$ossGraderMonthlyPlot = renderPlot({
-    oss.dat = data.frame(data()$grader,data()$ossificationcold,oss.mod()$residuals,data()$month)
+    oss.dat = data.frame(data()$grader,data()$ossification,oss.mod()$residuals,data()$month)
     plot.monthly.fn(data = oss.dat, title = "Ossification")
   })
   
@@ -821,7 +841,7 @@ server <- function(input, output) {
     plot.monthly.fn2(data = dat, title = "Rib fat")
   })
   output$humpGraderMonthlyPlot2 = renderPlot({
-    dat = data.frame(data()$grader,data()$humpcold,hump.mod()$residuals,data()$month)
+    dat = data.frame(data()$grader,data()$hump,hump.mod()$residuals,data()$month)
     dat = subset(dat,dat[,1]==input$individualGrader)
     plot.monthly.fn2(data = dat, title = "Hump height")
   })
@@ -832,7 +852,7 @@ server <- function(input, output) {
   })
   
   output$ossGraderMonthlyPlot2 = renderPlot({
-    dat = data.frame(data()$grader,data()$ossificationcold,oss.mod()$residuals,data()$month)
+    dat = data.frame(data()$grader,data()$ossification,oss.mod()$residuals,data()$month)
     dat = subset(dat,dat[,1]==input$individualGrader)
     plot.monthly.fn2(data = dat, title = "Ossification")
   })
@@ -853,11 +873,11 @@ server <- function(input, output) {
     res = data.frame(matrix(c(r2,stdevs),ncol=5,byrow = TRUE))
     colnames(res) = c("Marbling score","Hump height","Ossification","Rib fat","pH")
     rownames(res) = c("R2","Residual SD")
-    DT::datatable(res,rownames = TRUE,options = list(dom = 't')) %>% DT::formatRound(columns = 1:5,digits=1)
+    DT::datatable(res,rownames = TRUE,options = list(dom = 't',pageLength = 1000)) %>% DT::formatRound(columns = 1:5,digits=1)
   })
   
   output$ossGraderPlot = renderPlot({
-    oss.dat = data.frame(data()$grader,data()$ossificationcold,oss.mod()$residuals)
+    oss.dat = data.frame(data()$grader,data()$ossification,oss.mod()$residuals)
     plot.fn(data = oss.dat, title = "Ossification")
   })
   
